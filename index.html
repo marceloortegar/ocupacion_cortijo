@@ -107,45 +107,7 @@
 
   .sync-label { color: var(--text-muted); }
 
-  .capacity-section {
-    padding: 16px 24px;
-    border-bottom: 1px solid var(--border);
-  }
 
-  .section-label {
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--text-muted);
-    margin-bottom: 10px;
-  }
-
-  .cap-display {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-  }
-
-  .cap-display-item {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 8px 10px;
-  }
-
-  .cap-display-item label {
-    display: block;
-    font-size: 10px;
-    color: var(--text-muted);
-    margin-bottom: 2px;
-  }
-
-  .cap-display-item span {
-    font-size: 18px;
-    font-weight: 700;
-    color: var(--text-primary);
-  }
 
   .add-btn {
     margin: 16px 24px;
@@ -567,19 +529,7 @@
     </div>
   </div>
 
-  <div class="capacity-section">
-    <div class="section-label">Capacidad máxima</div>
-    <div class="cap-display">
-      <div class="cap-display-item">
-        <label>Individual</label>
-        <span id="capSingleDisplay"></span>
-      </div>
-      <div class="cap-display-item">
-        <label>Doble</label>
-        <span id="capDoubleDisplay"></span>
-      </div>
-    </div>
-  </div>
+
 
   <button class="add-btn" id="addBtn" onclick="openModal()">+ Nueva reserva</button>
 
@@ -686,8 +636,8 @@
   // ── CAPACIDAD MÁXIMA ──
   // Para cambiar la capacidad, edita estos dos números y vuelve a subir el archivo a GitHub.
   const CAPACITY = {
-    single: 13,   // camas individuales
-    double: 5    // camas dobles
+    single: 4,   // camas individuales
+    double: 4    // camas dobles
   };
 
   // ── STATE ──
@@ -741,10 +691,6 @@
 
   // ── CAPACIDAD ──
   function getCapacity() { return CAPACITY; }
-
-  // Muestra los valores en la sidebar
-  document.getElementById('capSingleDisplay').textContent = CAPACITY.single;
-  document.getElementById('capDoubleDisplay').textContent = CAPACITY.double;
 
   function getBookingsForDate(dateStr) {
     return bookings.filter(b => dateStr >= b.start && dateStr <= b.end);
