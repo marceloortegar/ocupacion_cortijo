@@ -503,11 +503,97 @@
   .toast.show { transform: translateY(0); opacity: 1; }
 
   @media (max-width: 700px) {
-    body { flex-direction: column; overflow: auto; }
-    #sidebar { width: 100%; min-width: 0; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
-    #main { padding: 16px; overflow: visible; }
-    .cal-day { min-height: 52px; }
+    /* El body pasa a ser un scroll vertical de una sola columna */
+    body {
+      flex-direction: column;
+      height: auto;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
+    /* La sidebar de escritorio desaparece por completo en móvil */
+    #sidebar { display: none; }
+
+    /* El main ocupa toda la pantalla y no se corta */
+    #main {
+      padding: 0;
+      gap: 0;
+      overflow: visible;
+      height: auto;
+    }
+
+    /* ── BLOQUE 1: botón nueva reserva ── */
+    #mobileAddBar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      background: var(--sidebar);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    #mobileAddBar h1 {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    #mobileAddBar .mobile-sync {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .mobile-add-btn {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 9px 16px;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    /* ── BLOQUE 2: calendario ── */
+    #mobileCalWrapper {
+      padding: 12px 10px;
+      background: var(--bg);
+    }
+
+    /* ── BLOQUE 3: reservas del día seleccionado ── */
+    #mobileBookingsPanel {
+      padding: 16px;
+      background: var(--bg);
+      border-top: 1px solid var(--border);
+      min-height: 80px;
+    }
+
+    /* Ocultar en móvil elementos que solo son de escritorio */
+    .cal-nav { padding: 0 0 10px 0; }
+    .cal-nav h2 { font-size: 16px; }
+    .nav-btn { width: 32px; height: 32px; font-size: 14px; }
+    .legend { display: none; }
+    .cal-grid { overflow: visible; }
+    .cal-days { grid-template-columns: repeat(7, 1fr); }
+    .cal-day { min-height: 48px; padding: 6px 4px; }
+    .day-num { font-size: 12px; }
     .day-pill { display: none; }
+    .day-progress-bar { height: 2px; }
+  }
+
+  /* En escritorio, ocultar los elementos exclusivos de móvil */
+  @media (min-width: 701px) {
+    #mobileAddBar { display: none; }
+    #mobileCalWrapper { display: contents; }
+    #mobileBookingsPanel { display: none; }
   }
 </style>
 </head>
@@ -540,6 +626,18 @@
 
 <!-- MAIN -->
 <main id="main">
+
+  <!-- BLOQUE 1 (solo móvil): cabecera + botón nueva reserva -->
+  <div id="mobileAddBar">
+    <h1>Cortijo</h1>
+    <div class="mobile-sync">
+      <div class="sync-dot" id="syncDotMobile"></div>
+    </div>
+    <button class="mobile-add-btn" onclick="openModal()">+ Nueva reserva</button>
+  </div>
+
+  <!-- BLOQUE 2: calendario (escritorio y móvil) -->
+  <div id="mobileCalWrapper">
   <div class="cal-nav">
     <button class="nav-btn" onclick="changeMonth(-1)">&#8249;</button>
     <h2 id="monthTitle"></h2>
@@ -564,7 +662,14 @@
       <div class="cal-weekday">Dom</div>
     </div>
     <div class="cal-days" id="calDays"></div>
+  </div><!-- fin cal-grid -->
+  </div><!-- fin mobileCalWrapper -->
+
+  <!-- BLOQUE 3 (solo móvil): reservas del día seleccionado -->
+  <div id="mobileBookingsPanel">
+    <div class="no-selection">Selecciona un día para ver las reservas.</div>
   </div>
+
 </main>
 
 <!-- MODAL -->
@@ -636,8 +741,8 @@
   // ── CAPACIDAD MÁXIMA ──
   // Para cambiar la capacidad, edita estos dos números y vuelve a subir el archivo a GitHub.
   const CAPACITY = {
-    single: 4,   // camas individuales
-    double: 4    // camas dobles
+    single: 13,   // camas individuales
+    double: 5    // camas dobles
   };
 
   // ── STATE ──
@@ -666,8 +771,11 @@
   // ── SYNC STATUS ──
   function setSyncStatus(ok) {
     const dot   = document.getElementById('syncDot');
+    const dotM  = document.getElementById('syncDotMobile');
     const label = document.getElementById('syncLabel');
-    dot.className   = 'sync-dot ' + (ok ? 'connected' : 'error');
+    const cls   = 'sync-dot ' + (ok ? 'connected' : 'error');
+    dot.className  = cls;
+    dotM.className = cls;
     label.textContent = ok ? 'Sincronizado en tiempo real' : 'Sin conexión';
   }
 
@@ -798,9 +906,13 @@
 
   // ── SIDEBAR PANEL ──
   function renderSidebar() {
-    const panel = document.getElementById('selectedPanel');
+    const panel       = document.getElementById('selectedPanel');
+    const mobilePanel = document.getElementById('mobileBookingsPanel');
+
     if (!selectedDate) {
-      panel.innerHTML = '<div class="no-selection">Selecciona un día en el calendario para ver las reservas activas.</div>';
+      const empty = '<div class="no-selection">Selecciona un día en el calendario para ver las reservas activas.</div>';
+      panel.innerHTML       = empty;
+      mobilePanel.innerHTML = '<div class="no-selection">Selecciona un día para ver las reservas.</div>';
       return;
     }
 
@@ -850,7 +962,13 @@
       });
     }
 
-    panel.innerHTML = html;
+    panel.innerHTML       = html;
+    mobilePanel.innerHTML = html;
+
+    // En móvil, scroll suave hasta el panel de reservas al seleccionar un día
+    if (window.innerWidth <= 700) {
+      mobilePanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   }
 
   // ── MODAL ──
