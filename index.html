@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Gestor de Ocupación</title>
+<title>Gestor de Ocupación — Cortijo</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -32,6 +32,36 @@
     overflow: hidden;
   }
 
+  /* ── LOADING SCREEN ── */
+  #loadingScreen {
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+    gap: 16px;
+  }
+
+  #loadingScreen.hidden { display: none; }
+
+  .spinner {
+    width: 36px; height: 36px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  #loadingScreen p {
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
   /* ── SIDEBAR ── */
   #sidebar {
     width: var(--sidebar-width);
@@ -57,13 +87,26 @@
     color: var(--text-muted);
   }
 
-  .sidebar-header p {
-    font-size: 12px;
-    color: var(--text-muted);
+  .sync-status {
+    font-size: 11px;
     margin-top: 4px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
   }
 
-  /* Capacity config */
+  .sync-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--text-muted);
+    flex-shrink: 0;
+  }
+
+  .sync-dot.connected { background: var(--accent); }
+  .sync-dot.error { background: var(--danger); }
+
+  .sync-label { color: var(--text-muted); }
+
   .capacity-section {
     padding: 16px 24px;
     border-bottom: 1px solid var(--border);
@@ -112,7 +155,6 @@
     border-color: var(--accent);
   }
 
-  /* Add booking button */
   .add-btn {
     margin: 16px 24px;
     background: var(--accent);
@@ -131,8 +173,8 @@
 
   .add-btn:hover { opacity: 0.88; transform: translateY(-1px); }
   .add-btn:active { transform: translateY(0); }
+  .add-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
 
-  /* Selected date panel */
   .selected-panel {
     flex: 1;
     overflow-y: auto;
@@ -214,7 +256,6 @@
 
   .delete-btn:hover { color: var(--danger); background: rgba(224,82,82,0.1); }
 
-  /* Occupancy bar */
   .occ-bar-row {
     display: flex;
     gap: 8px;
@@ -222,9 +263,7 @@
     margin-bottom: 4px;
   }
 
-  .occ-bar-item {
-    flex: 1;
-  }
+  .occ-bar-item { flex: 1; }
 
   .occ-bar-label {
     font-size: 10px;
@@ -257,7 +296,6 @@
     gap: 16px;
   }
 
-  /* Calendar nav */
   .cal-nav {
     display: flex;
     align-items: center;
@@ -288,11 +326,11 @@
 
   .nav-btn:hover { background: var(--border); }
 
-  /* Legend */
   .legend {
     display: flex;
     gap: 20px;
     align-items: center;
+    flex-wrap: wrap;
   }
 
   .legend-item {
@@ -308,7 +346,6 @@
     border-radius: 2px;
   }
 
-  /* Calendar grid */
   .cal-grid {
     flex: 1;
     display: flex;
@@ -355,36 +392,12 @@
   }
 
   .cal-day:hover { border-color: var(--accent); transform: translateY(-1px); }
-
-  .cal-day.empty {
-    background: transparent;
-    border: 1px solid transparent;
-    cursor: default;
-    pointer-events: none;
-  }
-
-  .cal-day.today {
-    border-color: var(--accent);
-  }
-
-  .cal-day.selected {
-    border-color: var(--accent);
-    background: rgba(76,175,130,0.12);
-  }
-
-  .cal-day.over-capacity {
-    background: rgba(224,82,82,0.12);
-    border-color: var(--danger);
-  }
-
-  .cal-day.over-capacity:hover {
-    border-color: var(--danger);
-    background: rgba(224,82,82,0.2);
-  }
-
-  .cal-day.partial {
-    border-color: var(--warning);
-  }
+  .cal-day.empty { background: transparent; border: 1px solid transparent; cursor: default; pointer-events: none; }
+  .cal-day.today { border-color: var(--accent); }
+  .cal-day.selected { border-color: var(--accent); background: rgba(76,175,130,0.12); }
+  .cal-day.over-capacity { background: rgba(224,82,82,0.12); border-color: var(--danger); }
+  .cal-day.over-capacity:hover { background: rgba(224,82,82,0.2); }
+  .cal-day.partial { border-color: var(--warning); }
 
   .day-num {
     font-size: 13px;
@@ -393,13 +406,8 @@
     line-height: 1;
   }
 
-  .cal-day.today .day-num {
-    color: var(--accent);
-  }
-
-  .cal-day.over-capacity .day-num {
-    color: var(--danger);
-  }
+  .cal-day.today .day-num { color: var(--accent); }
+  .cal-day.over-capacity .day-num { color: var(--danger); }
 
   .day-bookings {
     margin-top: auto;
@@ -418,10 +426,7 @@
     padding: 1px 0;
   }
 
-  /* Progress bar inside day */
-  .day-progress {
-    margin-top: 4px;
-  }
+  .day-progress { margin-top: 4px; }
 
   .day-progress-bar {
     height: 3px;
@@ -462,15 +467,9 @@
     overflow-y: auto;
   }
 
-  .modal h3 {
-    font-size: 16px;
-    font-weight: 700;
-    margin-bottom: 20px;
-  }
+  .modal h3 { font-size: 16px; font-weight: 700; margin-bottom: 20px; }
 
-  .form-group {
-    margin-bottom: 14px;
-  }
+  .form-group { margin-bottom: 14px; }
 
   .form-group label {
     display: block;
@@ -494,22 +493,11 @@
     transition: border-color 0.15s;
   }
 
-  .form-group input:focus {
-    outline: none;
-    border-color: var(--accent);
-  }
+  .form-group input:focus { outline: none; border-color: var(--accent); }
 
-  .form-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-  }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
-  .modal-actions {
-    display: flex;
-    gap: 10px;
-    margin-top: 20px;
-  }
+  .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
 
   .btn-primary {
     flex: 1;
@@ -526,6 +514,7 @@
   }
 
   .btn-primary:hover { opacity: 0.88; }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
 
   .btn-secondary {
     background: var(--card);
@@ -563,7 +552,6 @@
     body { flex-direction: column; overflow: auto; }
     #sidebar { width: 100%; min-width: 0; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
     #main { padding: 16px; overflow: visible; }
-    .cal-days { grid-template-columns: repeat(7, 1fr); }
     .cal-day { min-height: 52px; }
     .day-pill { display: none; }
   }
@@ -571,11 +559,20 @@
 </head>
 <body>
 
+<!-- Loading -->
+<div id="loadingScreen">
+  <div class="spinner"></div>
+  <p>Conectando con la base de datos…</p>
+</div>
+
 <!-- SIDEBAR -->
 <aside id="sidebar">
   <div class="sidebar-header">
     <h1>Gestor de Ocupación</h1>
-    <p>Selecciona un día para ver reservas</p>
+    <div class="sync-status">
+      <div class="sync-dot" id="syncDot"></div>
+      <span class="sync-label" id="syncLabel">Conectando…</span>
+    </div>
   </div>
 
   <div class="capacity-section">
@@ -592,14 +589,14 @@
     </div>
   </div>
 
-  <button class="add-btn" onclick="openModal()">+ Nueva reserva</button>
+  <button class="add-btn" id="addBtn" onclick="openModal()">+ Nueva reserva</button>
 
   <div class="selected-panel" id="selectedPanel">
     <div class="no-selection">Selecciona un día en el calendario para ver las reservas activas.</div>
   </div>
 </aside>
 
-<!-- MAIN CALENDAR -->
+<!-- MAIN -->
 <main id="main">
   <div class="cal-nav">
     <button class="nav-btn" onclick="changeMonth(-1)">&#8249;</button>
@@ -611,7 +608,7 @@
     <div class="legend-item"><div class="legend-dot" style="background:var(--accent)"></div> Disponible</div>
     <div class="legend-item"><div class="legend-dot" style="background:var(--warning)"></div> Capacidad ajustada</div>
     <div class="legend-item"><div class="legend-dot" style="background:var(--danger)"></div> Sin capacidad</div>
-    <div class="legend-item"><div class="legend-dot" style="background:var(--card); border: 1px solid var(--accent)"></div> Hoy</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--card); border:1px solid var(--accent)"></div> Hoy</div>
   </div>
 
   <div class="cal-grid">
@@ -632,12 +629,10 @@
 <div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
   <div class="modal">
     <h3>Nueva reserva</h3>
-
     <div class="form-group">
       <label>Nombre / Grupo</label>
       <input type="text" id="fName" placeholder="Ej: Familia García">
     </div>
-
     <div class="form-row">
       <div class="form-group">
         <label>Fecha entrada</label>
@@ -648,47 +643,86 @@
         <input type="date" id="fEnd">
       </div>
     </div>
-
     <div class="form-group">
       <label>Número de personas</label>
-      <input type="number" id="fPeople" min="1" value="1" placeholder="1">
+      <input type="number" id="fPeople" min="1" value="1">
     </div>
-
     <div class="form-row">
       <div class="form-group">
         <label>Camas individuales</label>
-        <input type="number" id="fSingle" min="0" value="0" placeholder="0">
+        <input type="number" id="fSingle" min="0" value="0">
       </div>
       <div class="form-group">
         <label>Camas dobles</label>
-        <input type="number" id="fDouble" min="0" value="0" placeholder="0">
+        <input type="number" id="fDouble" min="0" value="0">
       </div>
     </div>
-
     <div class="modal-actions">
       <button class="btn-secondary" onclick="closeModal()">Cancelar</button>
-      <button class="btn-primary" onclick="saveBooking()">Guardar reserva</button>
+      <button class="btn-primary" id="saveBtn" onclick="saveBooking()">Guardar reserva</button>
     </div>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
-<script>
+<!-- ── FIREBASE ── -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
+  import {
+    getFirestore,
+    collection,
+    onSnapshot,
+    addDoc,
+    deleteDoc,
+    doc,
+    serverTimestamp
+  } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAQhFJtE-FUtyaXfZvQDLaEb8r9nImOi4I",
+    authDomain: "cortijo-2026.firebaseapp.com",
+    projectId: "cortijo-2026",
+    storageBucket: "cortijo-2026.firebasestorage.app",
+    messagingSenderId: "920225369893",
+    appId: "1:920225369893:web:b788155d6a29a57fa254cc"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db  = getFirestore(app);
+
   // ── STATE ──
-  let bookings = JSON.parse(localStorage.getItem('occ_bookings') || '[]');
+  let bookings = [];
   let selectedDate = null;
   let currentYear, currentMonth;
 
   const today = new Date();
-  currentYear = today.getFullYear();
+  currentYear  = today.getFullYear();
   currentMonth = today.getMonth();
 
-  // ── UTILS ──
-  function saveToStorage() {
-    localStorage.setItem('occ_bookings', JSON.stringify(bookings));
+  // ── FIRESTORE LISTENER (tiempo real) ──
+  // Cada vez que alguien añada o elimine una reserva, todos los navegadores se actualizan automáticamente
+  onSnapshot(collection(db, "bookings"), (snapshot) => {
+    bookings = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    document.getElementById('loadingScreen').classList.add('hidden');
+    setSyncStatus(true);
+    renderCalendar();
+    renderSidebar();
+  }, (err) => {
+    console.error(err);
+    setSyncStatus(false);
+    document.getElementById('loadingScreen').classList.add('hidden');
+  });
+
+  // ── SYNC STATUS ──
+  function setSyncStatus(ok) {
+    const dot   = document.getElementById('syncDot');
+    const label = document.getElementById('syncLabel');
+    dot.className   = 'sync-dot ' + (ok ? 'connected' : 'error');
+    label.textContent = ok ? 'Sincronizado en tiempo real' : 'Sin conexión';
   }
 
+  // ── UTILS ──
   function dateKey(y, m, d) {
     return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
   }
@@ -706,7 +740,7 @@
     setTimeout(() => t.classList.remove('show'), 2800);
   }
 
-  // ── OCCUPANCY CALCULATION ──
+  // ── CAPACIDAD ──
   function getCapacity() {
     return {
       single: parseInt(document.getElementById('capSingle').value) || 0,
@@ -715,17 +749,15 @@
   }
 
   function getBookingsForDate(dateStr) {
-    return bookings.filter(b => {
-      return dateStr >= b.start && dateStr <= b.end;
-    });
+    return bookings.filter(b => dateStr >= b.start && dateStr <= b.end);
   }
 
   function getOccupancyForDate(dateStr) {
-    const dayBookings = getBookingsForDate(dateStr);
+    const dayBks = getBookingsForDate(dateStr);
     return {
-      single: dayBookings.reduce((s, b) => s + (b.single || 0), 0),
-      double: dayBookings.reduce((s, b) => s + (b.double || 0), 0),
-      bookings: dayBookings
+      single:   dayBks.reduce((s, b) => s + (b.single || 0), 0),
+      double:   dayBks.reduce((s, b) => s + (b.double || 0), 0),
+      bookings: dayBks
     };
   }
 
@@ -733,9 +765,7 @@
     const { single, double } = getOccupancyForDate(dateStr);
     const cap = getCapacity();
     if (!cap.single && !cap.double) return 'ok';
-    const overSingle = cap.single > 0 && single > cap.single;
-    const overDouble = cap.double > 0 && double > cap.double;
-    if (overSingle || overDouble) return 'over';
+    if ((cap.single > 0 && single > cap.single) || (cap.double > 0 && double > cap.double)) return 'over';
     const pctS = cap.single > 0 ? single / cap.single : 0;
     const pctD = cap.double > 0 ? double / cap.double : 0;
     if (pctS >= 0.8 || pctD >= 0.8) return 'partial';
@@ -743,72 +773,62 @@
     return 'ok';
   }
 
-  // ── CALENDAR RENDER ──
+  // ── CALENDARIO ──
   function renderCalendar() {
     const title = new Date(currentYear, currentMonth, 1)
       .toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
     document.getElementById('monthTitle').textContent = title;
 
-    const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+    const firstDay    = new Date(currentYear, currentMonth, 1).getDay();
     const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-    // Adjust: Monday = 0
     const startOffset = (firstDay === 0 ? 6 : firstDay - 1);
+    const cap         = getCapacity();
 
     const container = document.getElementById('calDays');
     container.innerHTML = '';
 
     for (let i = 0; i < startOffset; i++) {
-      const empty = document.createElement('div');
-      empty.className = 'cal-day empty';
-      container.appendChild(empty);
+      const e = document.createElement('div');
+      e.className = 'cal-day empty';
+      container.appendChild(e);
     }
-
-    const cap = getCapacity();
 
     for (let d = 1; d <= daysInMonth; d++) {
       const key = dateKey(currentYear, currentMonth, d);
       const { single, double, bookings: dayBks } = getOccupancyForDate(key);
       const status = getStatusForDate(key);
 
-      const isToday = (
-        d === today.getDate() &&
-        currentMonth === today.getMonth() &&
-        currentYear === today.getFullYear()
-      );
+      const isToday    = d === today.getDate() && currentMonth === today.getMonth() && currentYear === today.getFullYear();
       const isSelected = key === selectedDate;
 
       const cell = document.createElement('div');
       cell.className = 'cal-day';
-      if (isToday) cell.classList.add('today');
+      if (isToday)    cell.classList.add('today');
       if (isSelected) cell.classList.add('selected');
-      if (status === 'over') cell.classList.add('over-capacity');
+      if (status === 'over')    cell.classList.add('over-capacity');
       if (status === 'partial') cell.classList.add('partial');
 
-      // Day number
       const numEl = document.createElement('div');
       numEl.className = 'day-num';
       numEl.textContent = d;
       cell.appendChild(numEl);
 
-      // Progress bars if capacity set
       if ((cap.single > 0 || cap.double > 0) && (single > 0 || double > 0)) {
         const prog = document.createElement('div');
         prog.className = 'day-progress';
-
         if (cap.single > 0) {
-          const pct = Math.min(single / cap.single, 1) * 100;
+          const pct   = Math.min(single / cap.single, 1) * 100;
           const color = single > cap.single ? 'var(--danger)' : single/cap.single >= 0.8 ? 'var(--warning)' : 'var(--accent)';
           prog.innerHTML += `<div class="day-progress-bar"><div class="day-progress-fill" style="width:${pct}%;background:${color}"></div></div>`;
         }
         if (cap.double > 0) {
-          const pct = Math.min(double / cap.double, 1) * 100;
+          const pct   = Math.min(double / cap.double, 1) * 100;
           const color = double > cap.double ? 'var(--danger)' : double/cap.double >= 0.8 ? 'var(--warning)' : 'var(--accent)';
           prog.innerHTML += `<div class="day-progress-bar"><div class="day-progress-fill" style="width:${pct}%;background:${color}"></div></div>`;
         }
         cell.appendChild(prog);
       }
 
-      // Mini booking pills
       if (dayBks.length > 0) {
         const pills = document.createElement('div');
         pills.className = 'day-bookings';
@@ -827,15 +847,9 @@
         cell.appendChild(pills);
       }
 
-      cell.addEventListener('click', () => selectDate(key));
+      cell.addEventListener('click', () => { selectedDate = key; renderCalendar(); renderSidebar(); });
       container.appendChild(cell);
     }
-  }
-
-  function selectDate(key) {
-    selectedDate = key;
-    renderCalendar();
-    renderSidebar();
   }
 
   // ── SIDEBAR PANEL ──
@@ -846,18 +860,17 @@
       return;
     }
 
-    const d = parseDateKey(selectedDate);
+    const d     = parseDateKey(selectedDate);
     const label = d.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
     const { single, double, bookings: dayBks } = getOccupancyForDate(selectedDate);
     const cap = getCapacity();
 
     let html = `<div class="selected-date-title">${label}</div>`;
 
-    // Occupancy summary bars
     if (cap.single > 0 || cap.double > 0) {
       html += `<div class="occ-bar-row">`;
       if (cap.single > 0) {
-        const pct = Math.min(single / cap.single, 1) * 100;
+        const pct   = Math.min(single / cap.single, 1) * 100;
         const color = single > cap.single ? 'var(--danger)' : single/cap.single >= 0.8 ? 'var(--warning)' : 'var(--accent)';
         html += `<div class="occ-bar-item">
           <div class="occ-bar-label"><span>Individual</span><span>${single}/${cap.single}</span></div>
@@ -865,7 +878,7 @@
         </div>`;
       }
       if (cap.double > 0) {
-        const pct = Math.min(double / cap.double, 1) * 100;
+        const pct   = Math.min(double / cap.double, 1) * 100;
         const color = double > cap.double ? 'var(--danger)' : double/cap.double >= 0.8 ? 'var(--warning)' : 'var(--accent)';
         html += `<div class="occ-bar-item">
           <div class="occ-bar-label"><span>Doble</span><span>${double}/${cap.double}</span></div>
@@ -878,14 +891,12 @@
     if (dayBks.length === 0) {
       html += `<div class="no-selection" style="margin-top:16px">Sin reservas para este día.</div>`;
     } else {
-      dayBks.forEach((b, idx) => {
-        const bIdx = bookings.findIndex(x => x.id === b.id);
+      dayBks.forEach(b => {
         html += `<div class="booking-card">
-          <button class="delete-btn" onclick="deleteBooking('${b.id}')">✕</button>
+          <button class="delete-btn" onclick="window._deleteBooking('${b.id}')">✕</button>
           <div class="bk-name">${b.name}</div>
           <div class="bk-meta">
-            ${b.people} persona${b.people !== 1 ? 's' : ''} &nbsp;·&nbsp;
-            ${b.start} → ${b.end}
+            ${b.people} persona${b.people !== 1 ? 's' : ''} &nbsp;·&nbsp; ${b.start} → ${b.end}
           </div>
           <div class="bk-beds">
             ${b.single > 0 ? `<span class="bed-tag">▪ ${b.single} ind.</span>` : ''}
@@ -899,81 +910,83 @@
   }
 
   // ── MODAL ──
-  function openModal() {
-    document.getElementById('fName').value = '';
+  window.openModal = function() {
+    document.getElementById('fName').value   = '';
     document.getElementById('fPeople').value = 1;
     document.getElementById('fSingle').value = 0;
     document.getElementById('fDouble').value = 0;
-
-    // Pre-fill dates from selected date
-    const today = new Date().toISOString().split('T')[0];
-    document.getElementById('fStart').value = selectedDate || today;
-    document.getElementById('fEnd').value = selectedDate || today;
-
+    const todayStr = new Date().toISOString().split('T')[0];
+    document.getElementById('fStart').value = selectedDate || todayStr;
+    document.getElementById('fEnd').value   = selectedDate || todayStr;
     document.getElementById('modalOverlay').classList.add('open');
     document.getElementById('fName').focus();
-  }
+  };
 
-  function closeModal(e) {
+  window.closeModal = function(e) {
     if (!e || e.target === document.getElementById('modalOverlay')) {
       document.getElementById('modalOverlay').classList.remove('open');
     }
-  }
+  };
 
-  function saveBooking() {
-    const name = document.getElementById('fName').value.trim();
-    const start = document.getElementById('fStart').value;
-    const end = document.getElementById('fEnd').value;
+  window.saveBooking = async function() {
+    const name   = document.getElementById('fName').value.trim();
+    const start  = document.getElementById('fStart').value;
+    const end    = document.getElementById('fEnd').value;
     const people = parseInt(document.getElementById('fPeople').value) || 1;
     const single = parseInt(document.getElementById('fSingle').value) || 0;
     const double = parseInt(document.getElementById('fDouble').value) || 0;
 
-    if (!name) { showToast('El nombre es obligatorio', true); return; }
-    if (!start || !end) { showToast('Las fechas son obligatorias', true); return; }
-    if (end < start) { showToast('La fecha de salida no puede ser anterior a la entrada', true); return; }
+    if (!name)         { showToast('El nombre es obligatorio', true); return; }
+    if (!start || !end){ showToast('Las fechas son obligatorias', true); return; }
+    if (end < start)   { showToast('La fecha de salida no puede ser anterior a la entrada', true); return; }
 
-    const booking = {
-      id: Date.now().toString(),
-      name, start, end, people, single, double
-    };
+    const btn = document.getElementById('saveBtn');
+    btn.disabled = true;
+    btn.textContent = 'Guardando…';
 
-    bookings.push(booking);
-    saveToStorage();
-    closeModal();
-    renderCalendar();
-    renderSidebar();
-    showToast(`Reserva de "${name}" guardada`);
-  }
+    try {
+      await addDoc(collection(db, "bookings"), {
+        name, start, end, people, single, double,
+        createdAt: serverTimestamp()
+      });
+      window.closeModal();
+      showToast(`Reserva de "${name}" guardada`);
+    } catch (err) {
+      console.error(err);
+      showToast('Error al guardar. Comprueba la conexión.', true);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Guardar reserva';
+    }
+  };
 
-  function deleteBooking(id) {
+  window._deleteBooking = async function(id) {
     if (!confirm('¿Eliminar esta reserva?')) return;
-    bookings = bookings.filter(b => b.id !== id);
-    saveToStorage();
-    renderCalendar();
-    renderSidebar();
-    showToast('Reserva eliminada');
-  }
+    try {
+      await deleteDoc(doc(db, "bookings", id));
+      showToast('Reserva eliminada');
+    } catch (err) {
+      showToast('Error al eliminar.', true);
+    }
+  };
 
-  // ── MONTH NAVIGATION ──
-  function changeMonth(dir) {
+  // ── NAVEGACIÓN ──
+  window.changeMonth = function(dir) {
     currentMonth += dir;
     if (currentMonth > 11) { currentMonth = 0; currentYear++; }
-    if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+    if (currentMonth < 0)  { currentMonth = 11; currentYear--; }
     renderCalendar();
-  }
+  };
 
-  // ── CAPACITY CHANGE ──
+  // ── CAPACIDAD (recalcula en tiempo real al cambiar) ──
   document.getElementById('capSingle').addEventListener('input', () => { renderCalendar(); renderSidebar(); });
   document.getElementById('capDouble').addEventListener('input', () => { renderCalendar(); renderSidebar(); });
 
-  // ── KEYBOARD ──
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') closeModal();
-  });
+  // ── TECLADO ──
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') window.closeModal(); });
 
-  // ── INIT ──
+  // Render inicial (sin datos aún, pero pinta estructura)
   renderCalendar();
-  renderSidebar();
 </script>
 </body>
 </html>
