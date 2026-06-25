@@ -121,38 +121,30 @@
     margin-bottom: 10px;
   }
 
-  .capacity-inputs {
+  .cap-display {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 8px;
   }
 
-  .cap-field {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-
-  .cap-field label {
-    font-size: 11px;
-    color: var(--text-muted);
-  }
-
-  .cap-field input {
+  .cap-display-item {
     background: var(--card);
     border: 1px solid var(--border);
     border-radius: 6px;
-    color: var(--text-primary);
-    font-family: inherit;
-    font-size: 14px;
-    padding: 6px 10px;
-    width: 100%;
-    transition: border-color 0.15s;
+    padding: 8px 10px;
   }
 
-  .cap-field input:focus {
-    outline: none;
-    border-color: var(--accent);
+  .cap-display-item label {
+    display: block;
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-bottom: 2px;
+  }
+
+  .cap-display-item span {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-primary);
   }
 
   .add-btn {
@@ -576,15 +568,15 @@
   </div>
 
   <div class="capacity-section">
-    <div class="section-label">Camas disponibles</div>
-    <div class="capacity-inputs">
-      <div class="cap-field">
+    <div class="section-label">Capacidad máxima</div>
+    <div class="cap-display">
+      <div class="cap-display-item">
         <label>Individual</label>
-        <input type="number" id="capSingle" min="0" value="4" placeholder="0">
+        <span id="capSingleDisplay"></span>
       </div>
-      <div class="cap-field">
+      <div class="cap-display-item">
         <label>Doble</label>
-        <input type="number" id="capDouble" min="0" value="4" placeholder="0">
+        <span id="capDoubleDisplay"></span>
       </div>
     </div>
   </div>
@@ -691,6 +683,13 @@
   const app = initializeApp(firebaseConfig);
   const db  = getFirestore(app);
 
+  // ── CAPACIDAD MÁXIMA ──
+  // Para cambiar la capacidad, edita estos dos números y vuelve a subir el archivo a GitHub.
+  const CAPACITY = {
+    single: 4,   // camas individuales
+    double: 4    // camas dobles
+  };
+
   // ── STATE ──
   let bookings = [];
   let selectedDate = null;
@@ -741,12 +740,11 @@
   }
 
   // ── CAPACIDAD ──
-  function getCapacity() {
-    return {
-      single: parseInt(document.getElementById('capSingle').value) || 0,
-      double: parseInt(document.getElementById('capDouble').value) || 0
-    };
-  }
+  function getCapacity() { return CAPACITY; }
+
+  // Muestra los valores en la sidebar
+  document.getElementById('capSingleDisplay').textContent = CAPACITY.single;
+  document.getElementById('capDoubleDisplay').textContent = CAPACITY.double;
 
   function getBookingsForDate(dateStr) {
     return bookings.filter(b => dateStr >= b.start && dateStr <= b.end);
@@ -977,10 +975,6 @@
     if (currentMonth < 0)  { currentMonth = 11; currentYear--; }
     renderCalendar();
   };
-
-  // ── CAPACIDAD (recalcula en tiempo real al cambiar) ──
-  document.getElementById('capSingle').addEventListener('input', () => { renderCalendar(); renderSidebar(); });
-  document.getElementById('capDouble').addEventListener('input', () => { renderCalendar(); renderSidebar(); });
 
   // ── TECLADO ──
   document.addEventListener('keydown', e => { if (e.key === 'Escape') window.closeModal(); });
